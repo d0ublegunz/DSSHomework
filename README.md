@@ -8,3 +8,10 @@ Providing the search paramter "gameDate" will load game information for the sele
 
 * Left and Right arrow keys cycle through individual games
 * Up and Down arrow keys will increment and decrement the date, respectively
+
+Simple Run Instructions
+To see this in action:
+ 1. Clone the repo, or download it's contents
+    * Extract file contents if downloaded as a zip file
+ 2. From the folder where the contents were downloaded, open index.html with a web browser
+    * This project was developed using Chrome Version 84.0.4147.135 and so will work best with it
