@@ -1,0 +1,75 @@
+body {
+  background-image: url(http://mlb.mlb.com/mlb/images/devices/ballpark/1920x1080/1.jpg);
+  background-size: auto;
+  min-height: 90vh;
+  max-width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+#gameList {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  max-width: inherit;
+  overflow: hidden;
+} 
+
+#gameList > div {
+  padding: 15px;
+}
+
+.img-team {
+  width: 320px;
+  height: 180px;
+  object-fit: contain;
+  -webkit-filter: grayscale(50%);
+  filter: grayscale(100%);
+  transition: all .2s linear;
+}
+
+.heading {
+  display: none;
+}
+
+.summary {
+  display: none;
+}
+
+.focus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+}
+
+.focus > .heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 15px;
+}
+.focus > .heading > * {
+  margin: 0;
+}
+
+.focus > .img-team {
+  width: 480px;
+  height: 270px;
+  object-fit: contain;
+  border: 5px solid white;
+  display: initial;
+  padding: 10px;
+  filter: none;
+}
+
+.focus > .summary {
+  display: initial;
+  margin-top: 15px;
+}
+
+.focus > .summary > p {
+  margin: 0;
+}
