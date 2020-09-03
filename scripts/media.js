@@ -5,12 +5,16 @@ const IMAGE = { width: 480, height: 270 };
 const DEFAULT_IMG = 'https://upload.wikimedia.org/wikipedia/en/thumb/a/a6/Major_League_Baseball_logo.svg/200px-Major_League_Baseball_logo.svg.png';
 
 let gameListEl;
+let modalEl;
 let gameData;
 let playDate;
+let displayModal;
 
 const initialize = () => {
   gameData = [];
   gameListEl = document.getElementById('gameList');
+  modalEl = document.getElementById('detailModal');
+  displayModal = false;
   addEventHandling();
   loadGameDataForDate();
 }
@@ -31,7 +35,7 @@ const fetchJson = async (date = new Date()) => {
       return await response.json();
     }
   } catch (error) {
-    console.log('Error fetching data. ', error.message);
+    console.error('Error fetching data. ', error.message);
   }
 }
 
@@ -41,7 +45,7 @@ const fetchJson = async (date = new Date()) => {
  */
 const parseGameData = (gameDataJson) => {
   if (!(gameDataJson && gameDataJson.dates)) {
-    console.log('No data for game date');
+    console.error('No data for game date');
     return;
   }
 
@@ -49,8 +53,9 @@ const parseGameData = (gameDataJson) => {
     .reduce((acc, cur) => acc
       .concat(cur.games
         .map(g => {
-          const photoCuts = _.get(g, 'content.editorial.recap.mlb.photo.cuts', []);
-          const largeImage = photoCuts.find(f => f.width === IMAGE.width && f.height === IMAGE.height);
+          const mlbRecap = _.get(g, 'content.editorial.recap.mlb', {});
+          const gameImage = _.get(mlbRecap, 'photo.cuts', [])
+            .find(i => i.width === IMAGE.width && i.height === IMAGE.height);
           const away = _.get(g, 'teams.away', {name: 'Away Team'});
           const home = _.get(g, 'teams.home', {name: 'Home Team'});
                   
@@ -59,8 +64,13 @@ const parseGameData = (gameDataJson) => {
             away: { name: away.team.name, score: away.score },
             home: { name: home.team.name, score: home.score },
             venue: g.venue || {},
-            imgLarge: largeImage ? largeImage.src : DEFAULT_IMG,
+            imgTeam: gameImage ? gameImage.src : DEFAULT_IMG,
             status: g.status || {},
+            recap: {
+              blurb: mlbRecap.blurb,
+              date: mlbRecap.date,
+              headline: mlbRecap.headline
+            }
           })
         })
       ), []);
@@ -73,6 +83,7 @@ const parseGameData = (gameDataJson) => {
  */
 const createGameDiv = (game, idSuffix) => {
   const gameDiv = document.createElement('div');
+  gameDiv.setAttribute('id', idSuffix.toString());
 
   // heading
   const hSize = 'h3';
@@ -96,7 +107,7 @@ const createGameDiv = (game, idSuffix) => {
 
   // image
   const teamImage = new Image();
-  teamImage.setAttribute('src', game.imgLarge);
+  teamImage.setAttribute('src', game.imgTeam);
   teamImage.setAttribute('alt', 'game image');
   teamImage.setAttribute('class', 'img-team');
   teamImage.setAttribute('id', `team-img-${idSuffix}`);
@@ -179,8 +190,12 @@ const handleKeyPress = (event) => {
       playDate.setDate(playDate.getDate() - 1);
       loadGameDataForDate(playDate.toISOString());
       break;
+    case 'Enter':
+      ToggleModal();
+      return;
   }
-  
+  // for any other keypress hide the modal
+  ToggleModal(false);
 }
 
 /**
@@ -217,6 +232,75 @@ const updateFocus = () => {
 }
 
 /**
+ * Create the body contents for the modal body
+ * @param {JSON} modalJson recap JSON data
+ */
+const CreateModalBody = (modalJson) => {
+  const bodyDiv = document.createElement('div');
+  bodyDiv.setAttribute('id', 'modal-body-content');
+
+  if (!modalJson.blurb) {
+    bodyDiv.append('No recap available.');
+    return bodyDiv;
+  }
+
+  // title
+  const title = document.createElement('h3');
+  title.append(modalJson.headline);  
+  title.setAttribute('class', 'title');
+  title.setAttribute('id', 'modal-body-title');
+  bodyDiv.appendChild(title);
+
+  // recap
+  const recap = document.createElement('main');
+  recap.setAttribute('class', 'recap');
+  recap.setAttribute('id', 'modal-body-recap');
+  
+  const date = new Date(modalJson.date);
+  const dateString = modalJson.date ? date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '';
+  const timeString = modalJson.date ? date.toLocaleTimeString() : '';
+
+  const recapDate = document.createElement('p');
+  recapDate.append(`${dateString} ${timeString}`);
+  recap.appendChild(recapDate);
+  const blurb = document.createElement('p');
+  blurb.append(modalJson.blurb);
+  recap.appendChild(blurb);
+
+  bodyDiv.appendChild(recap);
+
+  return bodyDiv;
+}
+
+/**
+ * Display modal with focus item contents
+ * 
+ * @param {boolean} state display state of the modal
+ */
+const ToggleModal = (state) => {
+  displayModal = state === undefined ? !displayModal : state;
+  if (!displayModal) {
+    modalEl.removeAttribute('class');
+    return;
+  }
+
+  const focused = gameListEl.getElementsByClassName('focus');
+  if (!focused) {
+    displayModal = false;
+    console.error('No game data in focus');
+    modalEl.removeAttribute('class');
+    return;
+  }
+
+  const modalBody = modalEl.getElementsByClassName('modal-body')[0];
+  modalBody.textContent = '';
+  
+  const game = gameData[focused[0].id];
+  modalEl.setAttribute('class', 'visible');
+  modalBody.appendChild(CreateModalBody(game.recap));
+}
+
+/**
  * Entry point for creating the game list
  * 
  * @param {string} date Date as a string, to get game data for
@@ -231,7 +315,7 @@ const loadGameDataForDate = async (inDate) => {
     gameData = parseGameData(gameDateJson);
 
   } catch (error) {
-    console.log('Loading error: ', error.message);
+    console.error('Loading error: ', error.message);
   }
 
   loadGameList();
