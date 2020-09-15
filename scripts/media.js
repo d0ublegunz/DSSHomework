@@ -77,72 +77,6 @@ const parseGameData = (gameDataJson) => {
 }
 
 /**
- * Create the element used in the game list
- * @param {JSON} game JSON game data 
- * @param {Number} idSuffix value appended to element id
- */
-const createGameDiv = (game, idSuffix) => {
-  const gameDiv = document.createElement('div');
-  gameDiv.setAttribute('id', idSuffix.toString());
-
-  // heading
-  const hSize = 'h3';
-  const heading = document.createElement('hgroup');
-  
-  const homeTeam = document.createElement(hSize);
-  homeTeam.append(game.home.name);
-  heading.appendChild(homeTeam);
-  
-  const vs = document.createElement(hSize);
-  vs.append('vs');
-  heading.appendChild(vs);
-  
-  const awayTeam = document.createElement(hSize);
-  awayTeam.append(game.away.name);
-  heading.appendChild(awayTeam);
-  
-  heading.setAttribute('class', 'heading');
-  heading.setAttribute('id', `heading-${idSuffix}`);
-  gameDiv.appendChild(heading);
-
-  // image
-  const teamImage = new Image();
-  teamImage.setAttribute('src', game.imgTeam);
-  teamImage.setAttribute('alt', 'game image');
-  teamImage.setAttribute('class', 'img-team');
-  teamImage.setAttribute('id', `team-img-${idSuffix}`);
-  gameDiv.appendChild(teamImage);
-
-  // summary
-  const summary = document.createElement('span');
-  summary.setAttribute('class', 'summary');
-  summary.setAttribute('id', `summary-${idSuffix}`);
-  
-  const date = new Date(game.gameDate);
-  const dateString = game.gameDate ? date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '';
-  const timeString = game.gameDate ? date.toLocaleTimeString() : '';
-
-  const playDate = document.createElement('p');
-  playDate.append(`${dateString} ${timeString}`);
-  summary.appendChild(playDate);
-  const venue = document.createElement('p');
-  venue.append(game.venue.name);
-  summary.appendChild(venue);
-
-  if (game.status.statusCode === 'F') {
-    const homeScore = document.createElement('p');
-    homeScore.append(`${game.home.name}: ${game.home.score}`);
-    summary.appendChild(homeScore);
-    const awayScore = document.createElement('p');
-    awayScore.append(`${game.away.name}: ${game.away.score}`);
-    summary.appendChild(awayScore);
-  }
-  gameDiv.appendChild(summary);
-
-  return gameDiv;
-}
-
-/**
  * Populates the game list
  */
 const loadGameList = () => {
@@ -223,53 +157,29 @@ const updateFocus = () => {
   const containerWidth = gameListEl.offsetWidth;
   let visibleElements = Math.floor(containerWidth / imgWidth);
 
-  // I think it looks better on the left side for an even number of elements
-  // if (visibleElements && visibleElements % 2 === 0) {
-  //   --visibleElements;
-  // }
   const center = Math.floor(visibleElements / 2);
   gameListEl.children[center].setAttribute('class', 'focus');
 }
 
 /**
- * Create the body contents for the modal body
- * @param {JSON} modalJson recap JSON data
+ * Format date and time for consistent display
+ * @param {string} inDateString Date as a string
  */
-const CreateModalBody = (modalJson) => {
-  const bodyDiv = document.createElement('div');
-  bodyDiv.setAttribute('id', 'modal-body-content');
+const CreateDisplayDate = (inDateString) => {
+  const date = new Date(inDateString);
+  const dateOptions = {
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  };
+  const dateString = inDateString ? date.toLocaleDateString(undefined, dateOptions) : '';
+  const timeString = inDateString ? date.toLocaleTimeString() : '';
 
-  if (!modalJson.blurb) {
-    bodyDiv.append('No recap available.');
-    return bodyDiv;
-  }
-
-  // title
-  const title = document.createElement('h3');
-  title.append(modalJson.headline);  
-  title.setAttribute('class', 'title');
-  title.setAttribute('id', 'modal-body-title');
-  bodyDiv.appendChild(title);
-
-  // recap
-  const recap = document.createElement('main');
-  recap.setAttribute('class', 'recap');
-  recap.setAttribute('id', 'modal-body-recap');
-  
-  const date = new Date(modalJson.date);
-  const dateString = modalJson.date ? date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '';
-  const timeString = modalJson.date ? date.toLocaleTimeString() : '';
-
-  const recapDate = document.createElement('p');
-  recapDate.append(`${dateString} ${timeString}`);
-  recap.appendChild(recapDate);
-  const blurb = document.createElement('p');
-  blurb.append(modalJson.blurb);
-  recap.appendChild(blurb);
-
-  bodyDiv.appendChild(recap);
-
-  return bodyDiv;
+  return {
+    dateString,
+    timeString
+  };
 }
 
 /**
